@@ -1,0 +1,33 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Data & datasets
+dataset/mind/
+dataset/gossipcop/
+gossipcop_raw/
+gossipcop_raw.zip
+
+# Cache, logs, experiments
+.cache/
+cache/
+logs/
+multirun/
+output/
+outputs/
+
+# Model / weight files
+*.pth
+*.pt
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
