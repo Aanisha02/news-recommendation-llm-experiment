@@ -2,27 +2,38 @@
     <img height=200 src="./.github/images/news-logo.png" alt="News Contents on Smartphone">
 </div>
 
-<h1 align="center">News Recommendation using LLM 🌎 </h1>
-<p align="center"><strong>Pre-trained Large Language Model Based News Recommendation using Python / PyTorch 🚀 </strong></p>
+<div align="center"> <img height=200 src="./.github/images/news-logo.png" alt="News contents on smartphone"> </div> <h1 align="center">News Recommendation Using LLM-Based NRMS</h1> <p align="center"><strong>Partial replication of the SIGIR 2025 study using NRMS and the GossipCop dataset</strong></p>
 
 ## Overview
 
-- Implementation of Pretrained Large Language Model Based News Recommendation using Python / PyTorch.
-- We adopted **Neural News Recommendation with Multi-Head Self-Attention(NRMS)**, known for its high performance among neural news recommendation methods, as our model.
-- We are using language models such as **BERT** and **DistilBERT** as the backbone to obtain embedding vectors for news content.
+This repository contains the code and experiment setup for Assignment 2, where Phase 0 of the SIGIR 2025 paper:
+
+Hu et al. (2025). “LLM-Generated Fake News Induces Truth Decay in News Ecosystem.” is replicated using:
+- The NRMS (Neural News Recommendation with Multi-Head Self-Attention) model
+- The original GossipCop FakeNewsNet dataset, converted into MIND-style format
+- Synthetic user–news interactions
+- Human-written real and fake news only (Phase 0)
+
+Phase 0 examines how a recommendation model ranks human-written fake (HF) vs human-written real (HR) articles, without injecting any LLM-generated content.
+
+This project does not include Phases 1–3 from the paper (LLM-generated articles), nor does it replicate LSTUR.
 
 ## Project Structure
 
 The project structure is as below.
 
 ```bash
-$ tree -L 2
+$ project -L 2
 ├── README.md
 ├── dataset/
-│   └── download_mind.py
-├── pyproject.toml
-├── requirements-dev.lock
-├── requirements.lock
+│   ├── gossipcop_raw/
+│   └── gossipcop/
+│       ├── train/
+│       ├── val/
+│       └── test/
+├── scripts/
+│   ├── convert_gossipcop_csv.py
+│   ├── compute_hf_hr_table.py
 ├── src/
 │   ├── config/
 │   ├── const/
@@ -30,17 +41,8 @@ $ tree -L 2
 │   ├── experiment/
 │   ├── mind/
 │   ├── recommendation/
-│   │   └── nrms/
-│   │       ├── AdditiveAttention.py
-│   │       ├── NRMS.py
-│   │       ├── PLMBasedNewsEncoder.py
-│   │       ├── UserEncoder.py
-│   │       ├── __init__.py
 │   └── utils/
-└── test/
-    ├── evaluation/
-    ├── mind/
-    └── recommendation/
+└── output/
 ```
 
 ## Preparation
@@ -52,7 +54,7 @@ $ tree -L 2
 - PyTorch 2.0.1
 - transformers 4.30.2
 
-### Setup
+### Environment Setup
 
 At first, create python virtualenv & install dependencies by running
 
@@ -68,7 +70,7 @@ Then, please set `PYTHONPATH` by runnning
 $ export PYTHONPATH=$(pwd)/src:$PYTHONPATH
 ```
 
-### Download Microsoft News Dataset (MIND)
+### Download Microsoft News Dataset (MIND) for training
 
 We use **[MIND (Microsoft News Dataset)](https://msnews.github.io/)** dataset for training and validating the news recommendation model. You can download them by executing [dataset/download_mind.py](https://github.com/YadaYuki/news-recommendation-llm/blob/main/dataset/download_mind.py).
 
@@ -99,69 +101,95 @@ If you successfully executed, `dataset` folder will be structured as follows:
         └── MINDsmall_train.zip
 ```
 
-## Experiment
+### Dataset for Phase 0
+
+Since the dataset used in the SIGIR 2025 study is not publicly available, this project uses:
+
+**GossipCop (FakeNewsNet) from Kaggle**, converted into MIND-style news + behavior format.
+
+Converting GossipCop to MIND-style
+
+Run:
+
+```
+rye run python scripts/convert_gossipcop_csv.py
+```
+This produces:
+```
+dataset/gossipcop/train/news.tsv
+dataset/gossipcop/train/behaviors.tsv
+dataset/gossipcop/val/news.tsv
+dataset/gossipcop/val/behaviors.tsv
+```
+Behavior rows are synthetically generated and include:
+- user_id
+- timestamp
+- clicked news
+- negative samples
+- candidate lists
+
+This matches the expectations of NRMS.
+
+
+## Training
 
 ### Fine Tune a model
 
-If you execute `src/experiments/train.py`, the news recommendation model will be finetuned on the **MIND small dataset**.
-Hyperparameters can be specified from the arguments.
+Example training command:
 
 ```bash
-$ rye run python src/experiments/train.py -m \
-    random_seed = 42 \
-    pretrained = "distilbert-base-uncased" \
-    npratio = 4 \
-    history_size = 50 \
-    batch_size = 16 \
-    gradient_accumulation_steps = 8 \
-    epochs = 3 \
-    learning_rate = 1e-4 \
-    weight_decay = 0.0 \
-    max_len = 30 \
+$ rye run python src/experiment/train_full.py -m \
+    batch_size=2 \
+    npratio=2 \
+    history_size=20 \
+    max_len=20 \
+    epochs=1 \
+    gradient_accumulation_steps=1
 ```
 
-You can see the default values for each hyperparameter in [src/config/config.py](https://github.com/YadaYuki/news-recommendation-llm/blob/feat/add-readme/src/config/config.py#L1-L23). If you simply execute `rye run python train.py`, fine-tuning will start based on the default values.
+Training was done on:
+- Approximately 500 synthetic behavior rows
+- DistilBERT as encoder
+- 1 epoch due to compute constraints
+
+Validation Split
+- Converted GossipCop validation set
+- ~2,200 behavior rows
+- 3 candidates per impression
 
 ### Model Performance
-
-We ran the fine-tuning code on Single GPU (V100 x 1). Then, evaluated on validation set of MIND Small Dataset. Additionally, as a point of comparison, we implemented **random** recommendations ([`src/experiments/evaluate_random.py`](https://github.com/YadaYuki/news-recommendation-llm/blob/feat/add-readme/src/experiment/evaluate_random.py) ) and evaluated.
-
-#### Experimental Result
-
-|         Model          |  AUC  |  MRR  | nDCG@5 | nDCG@10 | Time to Train |
-| :--------------------: | :---: | :---: | :----: | :-----: | :-----------: |
-| Random Recommendation  | 0.500 | 0.201 | 0.203  |  0.267  |       -       |
-| NRMS + DistilBERT-base | 0.674 | 0.297 | 0.322  |  0.387  |    15.0 h     |
-|    NRMS + BERT-base    | 0.689 | 0.306 | 0.336  |  0.400  |    28.5 h     |
-
-### Trained Model
-
-To make it easy to try inference and evaluation, we have publicly released the trained model.
-Here are the links.
-
-|         Model          |                                                Link                                                |
-| :--------------------: | :------------------------------------------------------------------------------------------------: |
-| NRMS + DistilBERT-base | [Google Drive](https://drive.google.com/file/d/1cw9WQSOVYJdYJCuIrSmU8odV2nsmith5/view?usp=sharing) |
-|    NRMS + BERT-base    | [Google Drive](https://drive.google.com/file/d/1ARiUgSVwcDFopFoIusp2MGQzwTMncOFf/view?usp=sharing) |
-
-You can try it with the following script.
-
-```python
-import torch
-from recommendation.nrms import NRMS, PLMBasedNewsEncoder, UserEncoder
-
-loss_fn: torch.nn.Module = torch.nn.CrossEntropyLoss()
-pretrained = "distilbert-base-uncased"
-news_encoder = PLMBasedNewsEncoder(pretrained)
-user_encoder = UserEncoder(hidden_size=hidden_size)
-nrms_net = NRMS(news_encoder=news_encoder, user_encoder=user_encoder, hidden_size=hidden_size, loss_fn=loss_fn).to(
-    device, dtype=torch.bfloat16
-)
-path_to_model = {path to trained NRMS-DistilBERT Model}
-nrms_net.load_state_dict(torch.load(path_to_model))
+To compute HF and HR metrics:
+```
+rye run python scripts/compute_hf_hr_table.py
 ```
 
-## Citation
+#### Experimental Results for Experimental Phase 0 - Trained on 500 Behaviours
+
+|         Model          |  MRR  |  nDCG@5  | nDCG@10 | Ratio@5 | Ratio@10 |
+| :--------------------: | :---: | :---: | :----: | :-----: | :-----------: |
+| HF  | 61.31 | 71.19 | 71.19  |  49.75  |       49.75       |
+| HR | 60.51 | 70.58 | 70.58  |  84.44  |    84.44     |
+|    RRA    | -1.32% | -0.85% | -0.85%  |  69.74%  |    69.74%     |
+
+#### Experimental Results for Experimental Phase 0 - Trained on 2000 Behaviours
+
+|         Model          |  MRR  |  nDCG@5  | nDCG@10 | Ratio@5 | Ratio@10 |
+| :--------------------: | :---: | :---: | :----: | :-----: | :-----------: |
+| HF  | 59.32 | 69.79 | 69.79  |  49.75  |       49.75       |
+| HR | 61.05 | 73.02 | 73.02  |  84.44  |    84.44     |
+|    RRA    | 2.72% | 1.17% | 1.17%  |  40.19%  |    40.19%     |
+
+#### Experimental Results From Original Study Baseline
+
+|         Model          |  MRR  |  nDCG@5  | nDCG@10 | Ratio@5 | Ratio@10 |
+| :--------------------: | :---: | :---: | :----: | :-----: | :-----------: |
+| HF  | 17.36 | 46.28 | 44.84  |  43.98  |       43.10       |
+| HR | 18.62 | 53.72 | 55.17  |  56.02  |    56.90     |
+|    RRA    | 7.26% | 16.08% | 23.04%  |  27.38%  |    32.02%     |
+
+
+
+## Reference for Model Source Code
 
 ```
 @misc{
@@ -197,23 +225,5 @@ https://doi.org/10.1145/3404835.3463069
 Wu, F., Qiao, Y., Chen, J.-H., Wu, C., Qi, T., Lian, J., Liu, D., Xie, X., Gao, J., Wu, W., & Zhou, M.
 https://aclanthology.org/2020.acl-main.331
 
-## Using This Software in Your Work
+[6] B, A. N. (2024, March 27). Gossipcop. Kaggle. https://www.kaggle.com/datasets/akshaynarayananb/gossipcop?resource=download 
 
-We warmly welcome the use of this software in academic, research, or educational settings. If you decide to use our software in your paper or project, we would appreciate it if you could inform us. This helps us understand the impact and reach of our software and can guide future development and improvements.
-
-Please contact us at: yada.yuki@fuji.waseda.jp
-
-### Citation
-
-If you refer to or use our software in your research, please cite it as follows:
-```
-@misc{yuki-yada-news-rec,
-  author = {Yuki Yada},
-  title = {News Recommendation using PLMs},
-  year = {2023},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/YadaYuki/news-recommendation-llm}}
-}
-
-```
