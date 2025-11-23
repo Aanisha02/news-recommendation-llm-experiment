@@ -18,9 +18,6 @@ MIND_DATASET_DIR = DATASET_DIR / "mind"
 MIND_SMALL_DATASET_DIR = DATASET_DIR / "gossipcop"
 MIND_LARGE_DATASET_DIR = MIND_DATASET_DIR / "large"
 
-#  "small" split = GossipCop 
-#   dataset/gossipcop/train/{news.tsv,be
-haviors.tsv}
 #   dataset/gossipcop/val/{news.tsv,behaviors.tsv}
 #   (test is optional)
 MIND_SMALL_TRAIN_DATASET_DIR = MIND_SMALL_DATASET_DIR / "train"
