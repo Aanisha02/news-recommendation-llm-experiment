@@ -2,7 +2,8 @@
     <img height=200 src="./.github/images/news-logo.png" alt="News Contents on Smartphone">
 </div>
 
-<div align="center"> <img height=200 src="./.github/images/news-logo.png" alt="News contents on smartphone"> </div> <h1 align="center">News Recommendation Using LLM-Based NRMS</h1> <p align="center"><strong>Partial replication of the SIGIR 2025 study using NRMS and the GossipCop dataset</strong></p>
+<div align="center"> <img height=200 src="./.github/images/news-logo.png" alt="News contents on smartphone"> </div> <h1 align="center">Assignment 2 - News Recommender System Phase 0 Evaluation</h1> <p align="center"><strong>Inspired by "LLM-Generated Fake News Induces Truth Decay in News Ecosystem: A Case Study on Neural News Recommendation"</strong></p>
+<p align="center"><strong>By: Aanisha Newaz</strong></p>
 
 ## Overview
 
@@ -225,5 +226,7 @@ https://doi.org/10.1145/3404835.3463069
 Wu, F., Qiao, Y., Chen, J.-H., Wu, C., Qi, T., Lian, J., Liu, D., Xie, X., Gao, J., Wu, W., & Zhou, M.
 https://aclanthology.org/2020.acl-main.331
 
-[6] B, A. N. (2024, March 27). Gossipcop. Kaggle. https://www.kaggle.com/datasets/akshaynarayananb/gossipcop?resource=download 
+[6] Beizhe Hu, Qiang Sheng, Juan Cao, Yang Li, and Danding Wang. 2025. LLM-Generated Fake News Induces Truth Decay in News Ecosystem: A Case Study on Neural News Recommendation. In Proceedings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '25). Association for Computing Machinery, New York, NY, USA, 435–445. https://doi.org/10.1145/3726302.3730027
+
+[7] B, A. N. (2024, March 27). Gossipcop. Kaggle. https://www.kaggle.com/datasets/akshaynarayananb/gossipcop?resource=download 
 
